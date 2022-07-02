@@ -6,6 +6,15 @@ local doctorCount = 0
 
 -- Compatibility with txAdmin Menu's heal options.
 -- This is an admin only server side event that will pass the target player id or -1.
+local QBCore = exports['qb-core']:GetCoreObject()
+local doctorCount = 0
+-- Events
+
+-- Compatibility with txAdmin Menu's heal options.
+-- This is an admin only server side event that will pass the target player id or -1.
+AddEventHandler('txAdmin:events:healedPlayer', function(eventData)
+	if GetInvokingResource() ~= "monitor" or type(eventData) ~= "table" or type(eventData.id) ~= "number" then
+		return
 AddEventHandler('txAdmin:events:healedPlayer', function(eventData)
 	if GetInvokingResource() ~= "monitor" or type(eventData) ~= "table" or type(eventData.id) ~= "number" then
 		return
@@ -270,7 +279,22 @@ QBCore.Functions.CreateCallback('hospital:GetPlayerBleeding', function(source, c
 end)
 
 -- Commands
-
+QBCore.Commands.Add("emsalert", "Report by the EMS", {{name="Message", help="It Ambulance Message"}}, false, function(source, args)
+    local Player = QBCore.Functions.GetPlayer(source)
+    
+    if (Player.PlayerData.job.name == "ambulance" and Player.PlayerData.job.onduty) then
+        if args[1] ~= nil then
+            local msg = table.concat(args, " ")
+            TriggerClientEvent("chatMessage", -1, "EMS ALERT", "error", msg)
+            TriggerEvent("qb-log:server:CreateLog", "emswebhook", "EMS Notification", "blue", "**"..GetPlayerName(source).."** (CitizenID: "..Player.PlayerData.citizenid.." | ID: "..source..") **Message:** " ..msg, false)
+            TriggerClientEvent('police:PlaySound', -1, "Event_Start_Text", "GTAO_FM_Events_Soundset", 0, 0, 1)
+        else
+            TriggerClientEvent('chatMessage', source, "SYSTEM", "error", "You must fill in Message!")
+        end
+    else
+        TriggerClientEvent('chatMessage', source, "SYSTEM", "error", "This command is for emergency services!")
+    end
+end) 
 QBCore.Commands.Add('911e', Lang:t('info.ems_report'), {{name = 'message', help = Lang:t('info.message_sent')}}, false, function(source, args)
 	local src = source
 	local message
